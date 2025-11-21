@@ -43,14 +43,13 @@ df = cargar_datos()
 
 # === Menú lateral ===
 
-# Ruta del logo
-logo_path = r"C:\Users\Aux Comisiones\OneDrive - SER COMUNICACIONES S.A.S\PAOLA\AUXCOMISIÓN\1 Otros\PROYECTO\SQL\04 Abril\Visual\logo.png"
+from PIL import Image
 
-# Cargar imagen
-logo = Image.open(logo_path)
+# Cargar imagen usando ruta relativa
+logo = Image.open("logo.png")
 
-# Mostrar logo en el sidebar, encima de los filtros
-st.sidebar.image(logo, use_container_width=True)  # ✅ Parámetro actualizado
+# Mostrar logo en el sidebar
+st.sidebar.image(logo, use_container_width=True)
 
 
 

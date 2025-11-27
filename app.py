@@ -29,6 +29,8 @@ st.markdown(
 )
 
 
+
+
 # Función para cargar datos
 @st.cache_data
 def cargar_datos():
@@ -41,12 +43,11 @@ def cargar_datos():
 df = cargar_datos()
 
 
-# === Menú lateral ===
-
 from PIL import Image
+import streamlit as st
 
-# Cargar imagen usando ruta relativa
-logo = Image.open("logo")
+# Cargar logo
+logo = Image.open("logo.png")
 
 # Mostrar logo en el sidebar
 st.sidebar.image(logo, use_container_width=True)

@@ -46,7 +46,7 @@ df = cargar_datos()
 from PIL import Image
 
 # Cargar imagen usando ruta relativa
-logo = Image.open("logo.png")
+logo = Image.open("logo")
 
 # Mostrar logo en el sidebar
 st.sidebar.image(logo, use_container_width=True)

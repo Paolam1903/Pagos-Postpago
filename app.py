@@ -17,12 +17,14 @@ st.set_page_config(
 )
 
 # ==============================
-# HEADER CON COLOR ROJO - titulo
+# HEADER CON COLOR VERDE - titulo
 # ==============================
 st.markdown(
     """
-    <div style="background-color:#FF0000; padding:15px; border-radius:8px;">
-        <h1 style="color:white; text-align:center;">📊 Dashboard Seguimiento de pagos – Planes postpago 2025</h1>
+    <div style="background-color:#2E7D32; padding:15px; border-radius:8px;">
+        <h1 style="color:white; text-align:center;">
+        📊 Dashboard Seguimiento de pagos – Planes postpago 2026
+        </h1>
     </div>
     """,
     unsafe_allow_html=True
@@ -130,26 +132,6 @@ if "Todas" not in pago_seleccionadas:
 
 
 # ==============================
-# 🔍 FILTRADO DE DATOS
-# ==============================
-df_filtrado = df.copy()
-
-if "Todas" not in sucursales_seleccionadas:
-    df_filtrado = df_filtrado[df_filtrado['Sucursal'].isin(sucursales_seleccionadas)]
-
-if "Todas" not in roles_seleccionadas:
-    df_filtrado = df_filtrado[df_filtrado['RolVendedor'].isin(roles_seleccionadas)]
-
-if "Todas" not in fechas_seleccionadas:
-    df_filtrado = df_filtrado[df_filtrado['fecha_factura'].isin(fechas_seleccionadas)]
-
-if "Todas" not in cfm_seleccionadas:
-    df_filtrado = df_filtrado[df_filtrado['cfm_con_iva'].isin(cfm_seleccionadas)]
-
-if "Todas" not in pago_seleccionadas:
-    df_filtrado = df_filtrado[df_filtrado['estado_pago'].isin(pago_seleccionadas)]
-
-# ==============================
 # 📊 AGRUPAR POR SUCURSAL (CONTEO)
 # ==============================
 df_agrupado = (
@@ -188,32 +170,43 @@ porcentaje_pago = 85  # ejemplo, puedes calcularlo con tus datos reales
 # ===== CSS Personalizado =====
 st.markdown("""
 <style>
-.card-box {
-    background: #ffffff;
-    border-radius: 15px;
-    padding: 20px 30px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    height: 280px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+
+/* 🔹 Sidebar fondo */
+section[data-testid="stSidebar"] {
+    background-color: #F5F5F5;
 }
-.card-title {
-    font-size: 20px;
-    font-weight: bold;
-    color: #222;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
+
+/* 🔹 Caja del multiselect */
+div[data-baseweb="select"] > div {
+    border: 1px solid #D0D0D0 !important;
+    border-radius: 8px !important;
+    background-color: white !important;
 }
-.metric {
-    font-size: 18px;
-    margin-bottom: 8px;
+
+/* 🔹 Hover suave gris */
+div[data-baseweb="select"] > div:hover {
+    border: 1px solid #A0A0A0 !important;
 }
-.metric b {
-    font-size: 22px;
-    color: #000;
+
+/* 🔹 🔥 TAGS (ANTES ROJO / VERDE → AHORA GRIS) */
+span[data-baseweb="tag"] {
+    background-color: #E0E0E0 !important;  /* gris claro */
+    color: #000000 !important;             /* texto negro */
+    border-radius: 6px !important;
+    border: 1px solid #C0C0C0 !important;
+    font-weight: 500;
 }
+
+/* 🔹 X del tag */
+span[data-baseweb="tag"] svg {
+    fill: #555 !important;
+}
+
+/* 🔹 Flecha dropdown */
+div[data-baseweb="select"] svg {
+    fill: #666 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -246,7 +239,7 @@ with col2:
     # ===== Gráfico tipo gauge circular =====
     n_segments = 20
     filled_segments = int((porcentaje_pago / 100) * n_segments)
-    colors = ["#E93131" if i < filled_segments else "#E0E0E0" for i in range(n_segments)]
+    colors = ["#096E1F89" if i < filled_segments else "#E0E0E0" for i in range(n_segments)]
 
     fig = go.Figure(go.Pie(
         values=[1]*n_segments,
@@ -280,9 +273,8 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(['Gráfico', 'Tabla', 'Vendedor', 'Mes', 
 
 with tab1:
     # ==============================
-    # 📈 GRÁFICO UNIFICADO DE CANTIDAD Y TOTAL (COP)
+    # 📊 AGRUPAR INFORMACIÓN
     # ==============================
-    # Agrupar información
     df_agrupado = (
         df_filtrado.groupby("Sucursal", as_index=False)
         .agg(
@@ -292,76 +284,68 @@ with tab1:
         .sort_values("Total_COP", ascending=False)
     )
 
+    # ==============================
+    # ⚠️ VALIDACIÓN
+    # ==============================
     if df_agrupado.empty:
         st.warning("⚠️ No hay datos que coincidan con los filtros seleccionados.")
     else:
+        
+
+        # ==============================
+        # 📊 GRÁFICO PROFESIONAL
+        # ==============================
+        import plotly.graph_objects as go
+
         fig = go.Figure()
 
-        # 💰 Barras: Total en COP
         fig.add_trace(go.Bar(
-            x=df_agrupado["Sucursal"],
-            y=df_agrupado["Total_COP"],
-            name="<b>💰 Total (COP)</b>",  # Negrilla en leyenda
-            marker_color="rgba(255, 102, 102, 0.7)",
-            text=[f"<b>${v:,.0f}</b>".replace(",", ".") for v in df_agrupado["Total_COP"]],  # Negrilla en valores
+            y=df_agrupado["Sucursal"],
+            x=df_agrupado["Total_COP"],
+            orientation='h',
+            marker=dict(color="#64BD7F"),  # gris ejecutivo
+            text=[
+                f"${v:,.0f} | {c} pagos".replace(",", ".")
+                for v, c in zip(df_agrupado["Total_COP"], df_agrupado["Cantidad"])
+            ],
             textposition="outside",
-            textfont=dict(size=16, color="black", family="Arial")
+            textfont=dict(size=14, color="black")
         ))
 
-        # 📈 Línea: Cantidad de pagos
-        fig.add_trace(go.Scatter(
-            x=df_agrupado["Sucursal"],
-            y=df_agrupado["Cantidad"],
-            name="<b>📦 Cantidad de pagos</b>",  # Negrilla en leyenda
-            mode="lines+markers+text",
-            text=[f"<b>{int(v):,}</b>".replace(",", ".") for v in df_agrupado["Cantidad"]],  # Negrilla en valores
-            textposition="top center",
-            line=dict(color="rgba(255, 182, 193, 0.9)", width=3),
-            marker=dict(size=12, color="rgba(139, 0, 0, 0.9)"),
-            yaxis="y2"
-        ))
-
-
-        # 🧭 Configuración de diseño
         fig.update_layout(
-            height=700,  # Más espacio vertical
-            margin=dict(t=150, b=80),  # Márgenes superiores e inferiores
-            title=dict(
-                text="📈 Relación entre cantidad de pagos y total (COP) por sucursal</b>",
-                font=dict(size=24, family="Arial Black", color="black")
+            title="💰 Total pagado por sucursal",
+            yaxis=dict(
+                autorange="reversed",
+                title="Sucursal"
             ),
             xaxis=dict(
-                tickangle=-90,
-                tickfont=dict(size=12, color="black", family="Arial Black")
+                title="Total (COP)"
             ),
-            yaxis=dict(
-                title=dict(text="💰 Total (COP)</b>", font=dict(size=14, family="Arial Black", color="black")),
-                tickfont=dict(size=12, color="black", family="Arial Black")
-            ),
-            yaxis2=dict(
-                title=dict(text="📦 Cantidad de pagos</b>", font=dict(size=12, family="Arial Black", color="black")),
-                tickfont=dict(size=12, color="black", family="Arial Black"),
-                overlaying="y",
-                side="right"
-            ),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=12, family="Arial Black", color="black")
-            ),
-            bargap=0.3,
+            height=900,
             plot_bgcolor="white",
             paper_bgcolor="white"
         )
 
-        # Evitar que se recorten los textos
-        fig.update_traces(cliponaxis=False)
-
         st.plotly_chart(fig, use_container_width=True)
 
+        st.markdown("---")
+
+        # ==============================
+        # 📋 TABLA DETALLADA
+        # ==============================
+        df_tabla = df_agrupado.copy()
+
+        df_tabla["Total_COP"] = df_tabla["Total_COP"].apply(
+            lambda x: f"${x:,.0f}".replace(",", ".")
+        )
+
+        df_tabla = df_tabla.rename(columns={
+            "Sucursal": "🏪 Sucursal",
+            "Cantidad": "📦 Cantidad",
+            "Total_COP": "💰 Total Pagado (COP)"
+        })
+
+        st.dataframe(df_tabla, use_container_width=True)
 
 
 with tab2:
@@ -452,7 +436,7 @@ with tab3:
         }
         .progress {
             height: 100%;
-            background: #FF0000; /* Rojo sólido */
+            background: #2E7D32;
         }
     </style>
     """,
@@ -483,115 +467,278 @@ with tab3:
     st.markdown('</table></div>', unsafe_allow_html=True)
 
 
-with tab4:
-   
-    # ==============================
-    # 📈 GRÁFICO UNIFICADO DE CANTIDAD Y TOTAL (COP) por mes
-    # ==============================
 
-    
-    # Diccionario para convertir nombres de meses a número
+## GRAFICO DONDE VISUALIZO CANTIDAD Y $ VALORES DE LAS COMPENSACIONES#
+# ==========================================================
+# TAB 4 - TOTAL Y CANTIDAD DE PAGOS POR MES (TODOS LOS CORTES)
+# ==========================================================
+with tab4:
+
+    import pandas as pd
+    import plotly.graph_objects as go
+
+    # ==============================
+    # 📅 PROCESO DE FECHAS
+    # ==============================
     meses_dict = {
-        "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
-        "julio": 7, "agosto": 8, "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12
+        "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
+        "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
+        "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12
     }
 
-    # Normalizar texto en la columna fecha_factura
-    df_filtrado["fecha_factura"] = df_filtrado["fecha_factura"].str.lower().str.strip()
+    df_mes = df_filtrado.copy()
 
-    # Crear columna Mes (número) usando el diccionario
-    df_filtrado["Mes"] = df_filtrado["fecha_factura"].map(meses_dict)
-
-    # Crear columna Mes_nombre (capitalizado)
-    df_filtrado["Mes_nombre"] = df_filtrado["fecha_factura"].str.capitalize()
-
-    # Eliminar filas donde Mes sea NaN (mes no reconocido)
-    df_filtrado = df_filtrado.dropna(subset=["Mes"])
-
-
-    # 4. Agrupar por mes
-    df_agrupado = (
-        df_filtrado.groupby(["Mes", "Mes_nombre"], as_index=False)
-        .agg(
-            Cantidad=("total_cortes", "count"),
-            Total_COP=("total_cortes", "sum")
-        )
-        .sort_values("Mes")  # Orden cronológico
+    df_mes["fecha_factura"] = (
+        df_mes["fecha_factura"]
+        .astype(str)
+        .str.lower()
+        .str.strip()
     )
 
-    # ✅ Verificación antes de graficar
+    df_mes["Mes"] = df_mes["fecha_factura"].map(meses_dict)
+    df_mes["Mes_nombre"] = df_mes["fecha_factura"].str.capitalize()
+
+    df_mes = df_mes.dropna(subset=["Mes"])
+
+    # ==============================
+    # SOLO REGISTROS CON PAGO
+    # ==============================
+    # Detectar si el filtro actual es SIN PAGO
+    es_sin_pago = False
+
+    if "estado_pago" in df_mes.columns:
+
+        estados = (
+            df_mes["estado_pago"]
+            .dropna()
+            .astype(str)
+            .str.strip()
+            .unique()
+            .tolist()
+        )
+
+        if len(estados) == 1 and estados[0].lower() == "sin pago":
+            es_sin_pago = True
+
+    # ==============================
+    # IDENTIFICAR COLUMNAS CORTE
+    # ==============================
+    columnas_corte = sorted([
+        col
+        for col in df_mes.columns
+        if col.startswith("corte")
+        and col != "total_cortes"
+    ])
+
+    # ==============================
+    # CALCULAR VALORES POR MES
+    # ==============================
+    resultados = []
+
+    for corte in columnas_corte:
+
+        df_corte = df_mes[df_mes[corte] > 0].copy()
+
+        if df_corte.empty:
+            continue
+
+        resumen = (
+            df_corte.groupby(
+                ["Mes", "Mes_nombre"],
+                as_index=False
+            )
+            .agg(
+                Cantidad=("numero_linea", "count"),
+                Valor=("total_cortes", "sum")
+            )
+        )
+
+        resumen["Corte"] = corte.capitalize()
+
+        resultados.append(resumen)
+
+    # ==============================
+    # VALIDACIÓN
+    # ==============================
+    if not resultados:
+        st.warning("⚠️ No hay información de cortes para mostrar.")
+        st.stop()
+
+    # ==============================
+    # UNIR TODOS LOS CORTES
+    # ==============================
+    df_resumen = pd.concat(resultados, ignore_index=True)
+
+    # ==============================
+    # TOTALIZAR POR MES
+    # ==============================
+    df_agrupado = (
+        df_resumen.groupby(
+            ["Mes", "Mes_nombre"],
+            as_index=False
+        )
+        .agg(
+            Cantidad=("Cantidad", "sum"),
+            Total_COP=("Valor", "sum")
+        )
+        .sort_values("Mes")
+    )
+
+    # ==============================
+    # VALIDACIÓN
+    # ==============================
     if df_agrupado.empty:
-        st.warning("⚠️ No hay datos que coincidan con los filtros seleccionados.")
-        st.write("Revisa el formato de fecha en la columna 'fecha_factura'.")
+        st.warning("⚠️ No hay datos.")
     else:
-        # ==============================
-        # Gráfico
-        # ==============================
+
         fig = go.Figure()
 
-        # 💰 Barras: Total en COP
-        fig.add_trace(go.Bar(
-            x=df_agrupado["Mes_nombre"],
-            y=df_agrupado["Total_COP"],
-            name="<b>💰 Total (COP)</b>",
-            marker_color="rgba(150, 150, 150, 0.7)",
-            text=[f"<b>${v:,.0f}</b>".replace(",", ".") for v in df_agrupado["Total_COP"]],
-            textposition="outside",
-            textfont=dict(size=16, color="black", family="Arial")
-        ))
+        fig.add_trace(
+            go.Bar(
+                x=df_agrupado["Mes_nombre"],
+                y=df_agrupado["Total_COP"],
+                marker=dict(color="#99CF9C"),
+                text=[
+                    f"${v:,.0f}<br>{c}"
+                    .replace(",", ".")
+                    for v, c in zip(
+                        df_agrupado["Total_COP"],
+                        df_agrupado["Cantidad"]
+                    )
+                ],
+                textposition="outside",
+                textfont=dict(
+                    size=14,
+                    color="black"
+                )
+            )
+        )
 
-        # 📈 Línea: Cantidad de pagos
-        fig.add_trace(go.Scatter(
-            x=df_agrupado["Mes_nombre"],
-            y=df_agrupado["Cantidad"],
-            name="<b>📦 Cantidad de pagos</b>",
-            mode="lines+markers+text",
-            text=[f"<b>{int(v):,}</b>".replace(",", ".") for v in df_agrupado["Cantidad"]],
-            textposition="top center",
-            line=dict(color="rgba(255, 102, 102, 0.7)", width=3),
-            marker=dict(size=12, color="rgba(139, 0, 0, 0.9)"),
-            yaxis="y2"
-        ))
-
-        # 🧭 Configuración de diseño
         fig.update_layout(
-            height=700,
-            margin=dict(t=150, b=80),
-            title=dict(
-                text="<b>📈 Relación entre cantidad de pagos y total (COP) por mes de facturación en nextSoft</b>",
-                font=dict(size=24, family="Arial Black", color="black")
+            title="💰 Total y cantidad de pagos por mes",
+            title_font=dict(
+                size=20,
+                color="black"
+            ),
+            height=550,
+            margin=dict(
+                t=80,
+                b=40
             ),
             xaxis=dict(
-                tickangle=-90,
-                tickfont=dict(size=12, color="black", family="Arial Black")
+                title="Mes",
+                tickfont=dict(
+                    size=13,
+                    color="black"
+                )
             ),
             yaxis=dict(
-                title=dict(text="<b>💰 Total (COP)</b>", font=dict(size=14, family="Arial Black", color="black")),
-                tickfont=dict(size=12, color="black", family="Arial Black")
+                title="Total (COP)",
+                tickfont=dict(
+                    size=13,
+                    color="black"
+                ),
+                automargin=True
             ),
-            yaxis2=dict(
-                title=dict(text="<b>📦 Cantidad de pagos</b>", font=dict(size=14, family="Arial Black", color="black")),
-                tickfont=dict(size=12, color="black", family="Arial Black"),
-                overlaying="y",
-                side="right"
-            ),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=12, family="Arial Black", color="black")
-            ),
-            bargap=0.3,
             plot_bgcolor="white",
             paper_bgcolor="white"
         )
 
-        # Evitar que se recorten los textos
-        fig.update_traces(cliponaxis=False)
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-        st.plotly_chart(fig, use_container_width=True)
+        # ==================================================
+        # GRAFICO ADICIONAL PARA PLANES SIN PAGO
+        # ==================================================
+
+        if True:
+
+            st.markdown("---")
+            st.subheader("📉 Cantidad de planes SIN pago por mes")
+
+            df_sin_pago = df_filtrado[
+                df_filtrado["estado_pago"].str.upper() == "SIN PAGO"
+            ].copy()
+
+            if not df_sin_pago.empty:
+
+                df_sin_pago["fecha_factura"] = (
+                    df_sin_pago["fecha_factura"]
+                    .astype(str)
+                    .str.lower()
+                    .str.strip()
+                )
+
+                df_sin_pago["Mes"] = df_sin_pago["fecha_factura"].map(meses_dict)
+                df_sin_pago["Mes_nombre"] = (
+                    df_sin_pago["fecha_factura"]
+                    .str.capitalize()
+                )
+
+                df_sin_pago = df_sin_pago.dropna(subset=["Mes"])
+
+                resumen_sin_pago = (
+                    df_sin_pago
+                    .groupby(
+                        ["Mes", "Mes_nombre"],
+                        as_index=False
+                    )
+                    .agg(
+                        Cantidad=("numero_linea", "count")
+                    )
+                    .sort_values("Mes")
+                )
+
+                fig_sin_pago = go.Figure()
+
+                fig_sin_pago.add_trace(
+                    go.Bar(
+                        x=resumen_sin_pago["Mes_nombre"],
+                        y=resumen_sin_pago["Cantidad"],
+                        marker=dict(color="#F44336"),
+                        text=resumen_sin_pago["Cantidad"],
+                        textposition="outside"
+                    )
+                )
+
+                fig_sin_pago.update_layout(
+                    title="📉 Planes sin pago por mes",
+                    height=500,
+                    plot_bgcolor="white",
+                    paper_bgcolor="white",
+                    xaxis_title="Mes",
+                    yaxis_title="Cantidad de planes"
+                )
+
+                st.plotly_chart(
+                    fig_sin_pago,
+                    use_container_width=True
+                )
+
+            else:
+                st.info("No existen registros sin pago para los filtros seleccionados.")
+
+        # ==============================
+        # TABLA RESUMEN
+        # ==============================
+        st.subheader("📋 Resumen por mes")
+
+        tabla_mes = df_agrupado.copy()
+
+        tabla_mes["Total_COP"] = tabla_mes["Total_COP"].apply(
+            lambda x: f"$ {x:,.0f}".replace(",", ".")
+        )
+
+        st.dataframe(
+            tabla_mes[
+                ["Mes_nombre", "Cantidad", "Total_COP"]
+            ],
+            use_container_width=True
+        )
+
+
 
 
 
